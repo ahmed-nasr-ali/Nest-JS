@@ -1,66 +1,92 @@
-# MiddleWare Method
+# Error Handler
 
-u can add middleware at @src\main.ts
-app.use(middleware1);
-app.use(middleware2);
+## throw new Error
 
-middleware happen first then controller
-
-we can retrun json at middleware
-res.send({
-'name':'isRequired'
-})
-
-we can make log of method and path
-console.log('Making Request to ', req.method, ' ', req.originalUrl);
-
-# MiddleWare Class
-
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
-
-@Injectable()
-export class MiddleWare3 implements NestMiddleware {
-use(req: any, res: any, next: (error?: any) => void) {
-console.log('Reach Middle ware 3');
-next();
-}
+new Error('this is error ');
+it will return {
+"statusCode": 500,
+"message": "Internal server error"
 }
 
-- we use class pass to can make constructor and use oop functionality (dependecy injection - encapculation - ...)
+## u can use HttpException
 
-- u can not put it inside @src\main.ts and make this
-  app.use(middleware3); or app.use(new MiddleWare3())
-  it will not work
-
-# Dependency injection#
-
-At app.module.ts
-export class AppModule implements NestModule {
-configure(consumer: MiddlewareConsumer) {
-consumer
-.apply(LoggerMiddleware)
-.forRoutes('cats');
-}
+throw new HttpException('this error', HttpStatus.BAD_REQUEST);
+will return {
+"statusCode": 400, => becuase of HttpStatus.BAD_REQUEST
+"message": "this error" => message that u type
 }
 
-- MiddlewareConsumer => helper class provider many methods that can apply for middleware like (apply - forRoutes ...)
+## u can add object to HttpException
 
-- apply can take list of middleware (methods - class )
-  .apply(middleware1, MiddleWare3)
+throw new HttpException(
+{
+error: true,
+serverTime: new Date(),
+message: 'there is an expected error',
+},
+HttpStatus.BAD_REQUEST,
+);
 
-- we can make this middleware work with specific path and method
-  .forRoutes({ path: 'cats', method: RequestMethod.GET });
+## u can put cause to show error to backend side
 
-- we can make this middleware work with all route
-  .forRoutes('*');(wide card)
+try {
+await this.service.findAll()
+} catch (error) {
+throw new HttpException({
+status: HttpStatus.FORBIDDEN,
+error: 'This is a custom message',
+}, HttpStatus.FORBIDDEN, {
+cause: error
+});
+}
 
-- we can make this middleware work with specific Controller
-  .forRoutes(CatsController);
+## u can use cutome excpetion
 
-- we can make this middleware and put ex
-  .exclude(
-  { path: 'cats', method: RequestMethod.GET },
-  { path: 'cats', method: RequestMethod.POST },
-  )
-  so this middleware will apply only with this exclude
+- with empty constructor
+  new ForbiddenException();
+  will return {
+  "message": "Forbidden",
+  "statusCode": 403
+  }
+
+- with text at contuctor
+  new ForbiddenException('this an error ');
+  {
+  "message": "this an error ",
+  "error": "Forbidden",
+  "statusCode": 403
+  }
+
+- with object at constructor
+  new ForbiddenException({ error: true, message: 'ds' });
+  {
+  "error": true,
+  "message": "ds"
+  }
+
+### note u can use any othe custom class like
+
+## u can make custom excpetion filter
+
+- get the code from doc https://docs.nestjs.com/exception-filters at part of Exception filters#
+
+### u can use it above every route
+
+@Get()
+@UseFilters(HttpExceptionFilter)
+getAllCustomer() { throw new ForbiddenException('errrrrrrrrro');
+return this.customerService.getAllCustomer();
+}
+
+### u can use it above controller
+
+@Controller('cats')
+@UseFilters(HttpExceptionFilter)
+export class CatsController {
+...
+}
+
+#### u can make it global
+
+- at main.ts
+  app.useGlobalFilters(new HttpExceptionFilter());
