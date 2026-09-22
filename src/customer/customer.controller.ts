@@ -9,7 +9,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { CustomerService } from './customer.service';
-import { ZodValidationPipe } from '../my-first-pipe/zod.vaildator.pipe';
+import { zodBody } from '../common/validation';
 import { createCustomerSchema } from './customer.validator';
 import type { CustomerDTO } from './customer.validator';
 
@@ -39,8 +39,7 @@ export class CustomerController {
   // }
 
   @Post()
-  // @UsePipes(MyFirstPipePipe)
-  @UsePipes(new ZodValidationPipe(createCustomerSchema))
+  @UsePipes(zodBody(createCustomerSchema))
   createCustomer(@Body() body: CustomerDTO): any {
     console.log('in the create customer ');
     return this.customer.createCustomer(body);

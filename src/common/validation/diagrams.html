@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validation Module Diagrams</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --surface: #161b22;
+    --border: #2d333b;
+    --text: #e6edf3;
+    --muted: #9198a1;
+    --accent: #4a90d9;
+    --green: #5cb85c;
+    --red: #d9534f;
+    --amber: #d9b44a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0 16px 80px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  header p { color: var(--muted); margin: 0; font-size: 15px; }
+  nav {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 22px;
+    margin-bottom: 44px;
+  }
+  nav ol { margin: 0; padding-left: 20px; }
+  nav li { margin: 5px 0; }
+  nav a { color: var(--accent); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  nav span { color: var(--muted); }
+  h2 {
+    font-size: 22px;
+    margin: 56px 0 6px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+  h3 { font-size: 16px; margin: 32px 0 10px; color: var(--accent); }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 20px;
+    margin: 24px 0 32px;
+    overflow-x: auto;
+    text-align: center;
+  }
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 24px 0;
+  }
+  .legend h4 { margin: 0 0 12px; font-size: 14px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); }
+  .legend table { width: 100%; border-collapse: collapse; }
+  .legend td { padding: 7px 0; vertical-align: top; border-bottom: 1px solid var(--border); }
+  .legend tr:last-child td { border-bottom: none; }
+  .legend td:first-child {
+    width: 200px; padding-right: 18px; font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 13px; color: var(--accent); white-space: nowrap;
+  }
+  .note {
+    border-left: 3px solid var(--amber);
+    background: rgba(217,180,74,0.07);
+    padding: 14px 18px; margin: 20px 0; border-radius: 0 8px 8px 0;
+  }
+  .note strong { color: var(--amber); }
+  ul { padding-left: 22px; }
+  li { margin: 9px 0; }
+  code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 0.88em; background: rgba(110,118,129,0.18);
+    padding: 2px 6px; border-radius: 4px;
+  }
+  table.cmp { width: 100%; border-collapse: collapse; margin: 22px 0; font-size: 14px; }
+  table.cmp th, table.cmp td {
+    text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.cmp th { color: var(--muted); font-weight: 600; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.05em; }
+  @media (max-width: 640px) {
+    h1 { font-size: 24px; }
+    .legend td:first-child { width: auto; display: block; padding-bottom: 2px; }
+    .legend td { display: block; }
+    table.cmp { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Validation Module — Visual Reference</h1>
+  <p>Two views of <code>src/common/validation/</code>, each answering a different question.</p>
+</header>
+
+<nav>
+  <ol>
+    <li><a href="#state">State Diagram</a> <span>— what the data becomes</span></li>
+    <li><a href="#flowchart">Flowchart</a> <span>— what runs, and where it branches</span></li>
+  </ol>
+</nav>
+
+<h2 id="state">1. State Diagram</h2>
+<p class="sub">The lifecycle of a single payload — every state it can occupy, and what moves it on.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+stateDiagram-v2
+    [*] --> RawInput : request arrives
+
+    RawInput --> Validating : pipe.transform(value)
+
+    Validating --> Parsed : safeParse succeeded
+    Validating --> Rejected : safeParse failed
+
+    Parsed --> Trusted : returned to controller
+    Trusted --> [*] : 201 Created
+
+    Rejected --> DomainError : throw ValidationFailedError
+    DomainError --> HttpError : exceptionFactory.create()
+    HttpError --> ErrorEnvelope : HttpExceptionFilter
+    ErrorEnvelope --> [*] : 400 or 422
+
+    note right of Parsed
+        Data may have CHANGED here:
+        transform(Number) etc.
+    end note
+
+    note right of DomainError
+        Still framework-free.
+        No HTTP knowledge yet.
+    end note
+</pre>
+</div>
+
+<div class="legend">
+  <h4>How to read this drawing</h4>
+  <table>
+    <tr><td>Rounded box</td><td>A <strong>state</strong> — a condition the data rests in.</td></tr>
+    <tr><td>Arrow</td><td>A <strong>transition</strong> — moving from one state to the next.</td></tr>
+    <tr><td>Arrow label</td><td>The <strong>trigger</strong> that causes the transition.</td></tr>
+    <tr><td>● filled circle</td><td>Start and end of the lifecycle.</td></tr>
+    <tr><td>Note</td><td>A fact about that state, not a step.</td></tr>
+  </table>
+</div>
+
+<h3>What the shape is telling you</h3>
+<ul>
+  <li><strong>There is no arrow back into <code>Validating</code>.</strong> Once data leaves that state
+      it is never re-checked. Nothing downstream re-validates, which is exactly why the controller can
+      trust what it receives — and also why a bug in the schema cannot be caught later.</li>
+  <li><strong><code>Parsed</code> and <code>RawInput</code> are not the same data.</strong> The note
+      marks where <code>transform(Number)</code> and friends run. A payload that entered as
+      <code>"12345678901234"</code> (string) leaves as a number. The state diagram makes that mutation
+      an explicit state change rather than a hidden side effect.</li>
+  <li><strong>The failure path has three distinct states, not one.</strong>
+      <code>DomainError</code> → <code>HttpError</code> → <code>ErrorEnvelope</code>. Each is owned by a
+      different class, and each knows less about HTTP than the next. Collapsing them into one state
+      would be the same as hard-coding the response format inside the validator.</li>
+  <li><strong>Both terminal arrows lead to the same <code>[*]</code>.</strong> Every request ends —
+      there is no state the data can get stuck in, and no path that silently drops it.</li>
+</ul>
+
+<h2 id="flowchart">2. Flowchart — Request Lifecycle</h2>
+<p class="sub">One request, from arrival to response, through both possible outcomes.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    A["HTTP Request — POST /customer"] --> B["NestJS matches route"]
+    B --> C["SchemaValidationPipe.transform"]
+    C --> D["validator.validate"]
+    D --> E["schema.safeParse"]
+    E --> F{"success?"}
+
+    F -->|yes| G["return parsed data"]
+    G --> H["Controller method runs"]
+    H --> I["CustomerService.createCustomer"]
+    I --> J["HTTP 201 Created"]
+
+    F -->|no| K["map ZodIssue to ValidationIssue"]
+    K --> L["throw ValidationFailedError"]
+    L --> M["pipe catches it"]
+    M --> N["exceptionFactory.create"]
+    N --> O{"which factory<br/>was injected?"}
+    O -->|zodBody| P["422 Unprocessable"]
+    O -->|zodQuery| Q["400 Bad Request"]
+    P --> R["HttpExceptionFilter"]
+    Q --> R
+    R --> S["JSON error response"]
+
+    style F fill:#3d3416,stroke:#d9b44a,color:#fff
+    style O fill:#3d3416,stroke:#d9b44a,color:#fff
+    style J fill:#2d4a2b,stroke:#5cb85c,color:#fff
+    style S fill:#4a2b2b,stroke:#d9534f,color:#fff
+</pre>
+</div>
+
+<div class="legend">
+  <h4>How to read this drawing</h4>
+  <table>
+    <tr><td>Rectangle</td><td>A step that runs.</td></tr>
+    <tr><td>Diamond (amber)</td><td>A decision — the path splits here.</td></tr>
+    <tr><td>Arrow label</td><td>The condition under which that branch is taken.</td></tr>
+    <tr><td>Green end</td><td>Success exit.</td></tr>
+    <tr><td>Red end</td><td>Failure exit.</td></tr>
+    <tr><td>Top to bottom</td><td>Time. Steps happen in the order drawn.</td></tr>
+  </table>
+</div>
+
+<h3>What the shape is telling you</h3>
+<ul>
+  <li><strong>Exactly two exits, and they never merge.</strong> Either the controller runs and you get
+      201, or you get a structured JSON error. The controller body is <em>never</em> reached with
+      invalid data — which is why controller code can trust its input and skip defensive checks.</li>
+  <li><strong>The two diamonds are different kinds of question.</strong> The first
+      (<code>success?</code>) is answered <em>at runtime</em>, from the data in the request. The
+      second (<code>which factory?</code>) was already answered <em>at startup</em>, when
+      <code>zodBody()</code> or <code>zodQuery()</code> built the pipe. Nothing inspects the request
+      to pick a status code — the choice is baked into which preset the route used. That is the
+      Strategy pattern visible as a branch that was decided before the request even arrived.</li>
+  <li><strong>The mapping box is where library coupling ends.</strong>
+      <code>map ZodIssue to ValidationIssue</code> is the last point where Zod-specific shapes exist.
+      Every box after it works with our own types. Swap Zod for Joi and only this one box changes;
+      everything downstream is untouched.</li>
+  <li><strong>Two translation layers, not one.</strong> The pipe turns a <em>domain</em> error into an
+      <em>HTTP</em> error; the global filter turns that into the final response envelope. Keeping
+      them separate is why validation code never hard-codes the response format.</li>
+</ul>
+
+<h2>How the two diagrams fit together</h2>
+<p class="sub">Same request, two questions. Each drawing is silent about what the other explains.</p>
+
+<table class="cmp">
+  <tr>
+    <th>Diagram</th><th>Answers</th><th>Cannot show</th><th>Reach for it when…</th>
+  </tr>
+  <tr>
+    <td><strong>State</strong></td>
+    <td>What does the data <em>become</em>?</td>
+    <td>Who performs each transition.</td>
+    <td>You are asking whether data was mutated, or where it can get stuck.</td>
+  </tr>
+  <tr>
+    <td><strong>Flowchart</strong></td>
+    <td>What runs, in what order, and where does it branch?</td>
+    <td>That the data itself changed along the way.</td>
+    <td>You are debugging one specific request.</td>
+  </tr>
+</table>
+
+<h3>Where they disagree — and why that is useful</h3>
+<ul>
+  <li><strong>The flowchart shows <code>return parsed data</code> as a single quiet box.</strong> The
+      state diagram insists it is a genuine change of state, with a note attached. Same line of code,
+      two levels of alarm — and the state diagram is the one telling the truth: a
+      <code>nationalID</code> that arrived as the string <code>"123456789012345"</code> leaves as a
+      number.</li>
+  <li><strong>The flowchart's failure path looks like plumbing.</strong> Boxes flow from
+      <code>throw</code> to <code>exceptionFactory.create</code> to <code>HttpExceptionFilter</code> as
+      if they were routine steps. The state diagram reframes exactly those steps as three
+      <em>distinct states</em> — <code>DomainError</code>, <code>HttpError</code>,
+      <code>ErrorEnvelope</code> — each knowing less about HTTP than the next. What looks like
+      plumbing is actually the module's central design decision.</li>
+  <li><strong>The flowchart can show a dead end; the state diagram cannot hide one.</strong> Because
+      every state must lead somewhere, the state diagram is the faster way to confirm no request gets
+      stuck. Both terminal arrows reach <code>[*]</code>, so every request ends.</li>
+</ul>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      background: '#161b22',
+      primaryColor: '#21262d',
+      primaryTextColor: '#e6edf3',
+      primaryBorderColor: '#4a90d9',
+      lineColor: '#8b949e',
+      fontSize: '14px'
+    },
+    flowchart: { curve: 'basis', padding: 18 }
+  });
+</script>
+
+</div>
+</body>
+</html>
