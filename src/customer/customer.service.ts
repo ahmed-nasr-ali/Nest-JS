@@ -1,11 +1,5 @@
 import { Injectable } from '@nestjs/common';
-
-class CustomerDTO {
-  constructor(
-    public name: string,
-    public age: number,
-  ) {}
-}
+import { CustomerDTO } from './customer.validator';
 
 @Injectable()
 class CustomerService {
@@ -17,7 +11,8 @@ class CustomerService {
 
   createCustomer(customer: CustomerDTO) {
     this.customer.push(customer);
+    return customer;
   }
 }
 
-export { CustomerService, CustomerDTO };
+export { CustomerService };

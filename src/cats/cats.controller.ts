@@ -19,21 +19,6 @@ export class CatsController {
 
   @Get()
   getAllCustomer() {
-    // throw new Error('this is error');
-    // throw new HttpException('this error', HttpStatus.BAD_REQUEST);
-    // throw new HttpException(
-    //   {
-    //     error: true,
-    //     serverTime: new Date(),
-    //     message: 'there is an expected error',
-    //   },
-    //   HttpStatus.BAD_REQUEST,
-    //   {
-    //     cause: 'sd',
-    //   },
-    // );
-    // throw new ForbiddenException({ error: true, message: 'ds' });
-    throw new ForbiddenException('errrrrrrrrro');
     return this.customerService.getAllCustomer();
   }
 }

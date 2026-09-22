@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { CustomerModule } from './customer/customer.module';
 import { CatsModule } from './cats/cats.module';
 import { ProductModule } from './product/product.module';
@@ -11,7 +11,7 @@ import { CustomerController } from './customer/customer.controller';
 @Module({
   imports: [CustomerModule, CatsModule, ProductModule, GlobalModule],
   controllers: [],
-  providers: [],
+  providers: [Logger],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

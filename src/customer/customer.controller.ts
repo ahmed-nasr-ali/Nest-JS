@@ -1,17 +1,48 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { CustomerService, CustomerDTO } from './customer.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UsePipes,
+  Query,
+  ParseIntPipe,
+  HttpStatus,
+} from '@nestjs/common';
+import { CustomerService } from './customer.service';
+import { ZodValidationPipe } from '../my-first-pipe/zod.vaildator.pipe';
+import { createCustomerSchema } from './customer.validator';
+import type { CustomerDTO } from './customer.validator';
+
+// import { MyFirstPipePipe } from '../my-first-pipe/my-first-pipe.pipe';
 
 @Controller('customer')
 export class CustomerController {
   constructor(private customer: CustomerService) {}
 
   @Get()
-  getAllCustomer() {
+  getAllCustomer(
+    @Query(
+      'limit',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    limit: string,
+  ) {
+    console.log('the type of limit is ', typeof limit);
+    console.log(limit);
     return this.customer.getAllCustomer();
   }
 
+  // @Post()
+  // @UsePipes(MyFirstPipePipe)
+  // createCustomer(@Body('name') name: string, @Body('age') age: number): any {
+  //   return this.customer.createCustomer(new CustomerDTO(name, age));
+  // }
+
   @Post()
-  createCustomer(@Body('name') name: string, @Body('age') age: number): any {
-    return this.customer.createCustomer(new CustomerDTO(name, age));
+  // @UsePipes(MyFirstPipePipe)
+  @UsePipes(new ZodValidationPipe(createCustomerSchema))
+  createCustomer(@Body() body: CustomerDTO): any {
+    console.log('in the create customer ');
+    return this.customer.createCustomer(body);
   }
 }
