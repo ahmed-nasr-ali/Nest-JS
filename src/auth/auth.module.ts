@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
-import { CatsService } from './cats.service';
-import { CatsController } from './cats.controller';
-import { CustomerModule } from '../customer/customer.module';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
@@ -12,7 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
       signOptions: { expiresIn: '1h' },
     }),
   ],
-  controllers: [CatsController],
-  providers: [CatsService],
+  controllers: [AuthController],
+  providers: [AuthService],
 })
-export class CatsModule {}
+export class AuthModule {}

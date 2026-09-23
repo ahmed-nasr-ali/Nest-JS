@@ -7,9 +7,16 @@ import { MiddleWare3 } from './middleware/middleware3';
 import middleware1 from './middleware/middleware1';
 import { CatsController } from './cats/cats.controller';
 import { CustomerController } from './customer/customer.controller';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [CustomerModule, CatsModule, ProductModule, GlobalModule],
+  imports: [
+    CustomerModule,
+    CatsModule,
+    ProductModule,
+    GlobalModule,
+    AuthModule,
+  ],
   controllers: [],
   providers: [Logger],
 })
