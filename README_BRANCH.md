@@ -20,3 +20,8 @@ return this.customerService.getAllCustomer();
 
 - u can return true
 - u can return error throw new UnauthorizedException();
+
+# Passport
+
+passport will take care of attching user object with user data itself
+on request body

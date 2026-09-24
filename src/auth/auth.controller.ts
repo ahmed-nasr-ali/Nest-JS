@@ -1,7 +1,17 @@
-import { Body, Controller, Post, UsePipes } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
 import { AuthPayloadDTO, authPayloadSchema } from './dto/auth.dto';
 import { AuthService } from './auth.service';
 import { zodBody } from '../common/validation';
+import { LocalGuard } from './guard/local.guard';
+import type { Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -9,7 +19,14 @@ export class AuthController {
 
   @Post('login')
   @UsePipes(zodBody(authPayloadSchema))
+  @UseGuards(LocalGuard)
   login(@Body() autPayload: AuthPayloadDTO) {
-    return this.authService.validateUser(autPayload);
+    const user = this.authService.validateUser(autPayload);
+    return user;
+  }
+
+  @Get('status')
+  status(@Req() req: Request) {
+    req.user;
   }
 }

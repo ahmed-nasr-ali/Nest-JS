@@ -5,6 +5,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  UnauthorizedException,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
@@ -22,6 +23,9 @@ export class CatsController {
   @UseGuards(AuthenticationGuard)
   @Get()
   getAllCustomer() {
-    return this.customerService.getAllCustomer();
+    const user = this.customerService.getAllCustomer();
+    if (!user) throw new UnauthorizedException();
+    console.log(user);
+    return user;
   }
 }
