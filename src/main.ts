@@ -5,6 +5,7 @@ import middleware2 from './middleware/middleware2';
 // import { HttpExceptionFilter } from './excpetion-filter/http-excpection.filter';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './excpetion-filter/http-excpection.filter';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,7 @@ async function bootstrap() {
   // app.use(middleware2);
   // app.useGlobalFilters(new HttpExceptionFilter());
   const loggerInstance = app.get(Logger);
+  const config = app.get(ConfigService);
   app.useGlobalFilters(new HttpExceptionFilter(loggerInstance));
   // app.useGlobalPipes(
   //   new ValidationPipe({
@@ -20,6 +22,6 @@ async function bootstrap() {
   //     forbidNonWhitelisted: true,
   //   }),
   // );
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(config.get('port') ?? 3000);
 }
 bootstrap();

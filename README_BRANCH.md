@@ -1,116 +1,72 @@
-# Pipe
+# Config
 
-## u can create pipe
+- run npm i --save @nestjs/config
+- to can use config module
 
-- write this command
-  nest g pipe MyFirstPipePip
-
-# use above route
-
-@Post()
-@UsePipes(MyFirstPipePipe)
-createCustomer(@Body('name') name: string, @Body('age') age: number): any {
-return this.customer.createCustomer(new CustomerDTO(name, age));
-}
-
-# u can add it in attribute
-
-@Get()
-getAllCustomer(@Query('limit', MyFirstPipePipe) limit: string) {
-console.log('the type of limit is ', typeof limit);
-console.log(limit);
-return this.customer.getAllCustomer();
-}
-
-- will change limit to number becuase MyFirstPipePipe was chnage value to number
-
-# u can use Build in pipe
-
-@Get()
-getAllCustomer(@Query('limit', ParseIntPipe) limit: string) {
-console.log('the type of limit is ', typeof limit);
-console.log(limit);
-return this.customer.getAllCustomer();
-}
-
-## u can override error
-
-- make new instance of this build in pipe
-  @Get()
-  getAllCustomer(
-  @Query('limit', new ParseIntPipe({ errorHttpStatusCode: 422 }))
-  limit: string,
-  ) {
-  console.log('the type of limit is ', typeof limit);
-  console.log(limit);
-  return this.customer.getAllCustomer();
+- make file inside config folder
+- put all secret data at .env
+- inside config file
+  export default {
+  database: {
+  connectionString: process.env.CONNECTION_STRING,
+  },
   }
 
-# custom vaildation
+- inside src\app.module.ts
+- make import import { ConfigModule } from '@nestjs/config';
+- use it inside appModule
+- inside imports add ConfigModule.forRoot({}),
+- case u change name of file .env put path of file inside
+  ConfigModule.forRoot({envFilePath : ""}),
+- u can put cache : true to save .env values inside memory to save time
+- isGlobal: true => so u can use it at any where inside app without export it
 
-- run this in command npm i --save class-validator class-transformer
-- add global pipe at main app.useGlobalPipes(new ValidationPipe());
-- we can add paramter to ValidationPipe
-  - disableErrorMessages: true
-  - whitelist: true, forbidNonWhitelisted: true =>can not enter extra data
+# Custom configuration files
 
-## second type most use is Zod
+- case have many config file like
+  config/configuration.ts
+  config/configuration2.ts
+- content of first file like that
 
-- run this command npm install --save zod
-
-### Create zod sechem
-
-import {
-PipeTransform,
-ArgumentMetadata,
-BadRequestException,
-} from '@nestjs/common';
-import { ZodSchema } from 'zod';
-
-export class ZodValidationPipe implements PipeTransform {
-constructor(private schema: ZodSchema) {}
-
-transform(value: unknown, metadata: ArgumentMetadata) {
-try {
-const parsedValue = this.schema.parse(value);
-return parsedValue;
-} catch (error) {
-throw new BadRequestException('Validation failed');
+export default () => ({
+port: parseInt(process.env.PORT ?? '', 10) || 3000,
+database: {
+host: process.env.DATABASE_HOST,
+port: parseInt(process.env.DATABASE_PORT ?? '', 10) || 5432
 }
-}
-}
-
-- this take value at this.schema.parse(value) => body
-  - case make parse without any error return it
-  - case any error throw it
-
-- to use it at route above controller
-  @UsePipes(new ZodValidationPipe(createCustomerSchema))
-  createCustomer(@Body() body: CustomerDTO): any {}
-- u can also use this at parms or query
-
-#### Query
-
-const limitSchema = z.object({
-limit: z.string().regex(/^\d+$/).transform(Number),
 });
 
-@Get()
-getAllCustomer(
-@Query(new ZodValidationPipe(limitSchema)) query: { limit: number },
-) {
-return this.customer.getAllCustomer();
-}
+- now we want to load this 2 file inside config module
+- import files
+  import configuration from './config/configuration.js';
+  import configuration2 from './config/configuration2.js';
 
-#### Param
+ConfigModule.forRoot({
+load: [configuration,configuration2 ],
+}),
 
-const idParamSchema = z.object({
-id: z.string().regex(/^\d+$/).transform(Number),
-});
+# use Config inside any module
 
-@Get(':id')
-getOneCustomer(
-@Param(new ZodValidationPipe(idParamSchema)) params: { id: number },
-) {
-...
-}
+- import { ConfigService } from '@nestjs/config'
+- at constructor add private configService : ConfigService
+- at any method console.log(configService.get('CONNECTION_STRING'))
+  CONNECTION_STRING is name of varible inside .env
+- or at any method console.log(configService.get('database.connectionString'))
+  database.connectionString is string inside src\config\config.ts
+
+# Remove Global from ConfigModule
+
+- now we want to use configModule inside any module
+- inside module of any feature
+  at imports [ConfigModule.forFeature(config)]
+  - import import { ConfigModule } from '@nestjs/config';
+  - import config from 'src\config\config.ts';
+
+# use Port
+
+- add port 3000 at .env
+- add port at src\config\config.ts
+  port: process.env.PORT,
+- inside main get configuration
+  const config = app.get(ConfigService);
+- then use it await app.listen(config.get('port') ?? 3000);

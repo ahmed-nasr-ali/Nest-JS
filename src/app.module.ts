@@ -7,9 +7,18 @@ import { MiddleWare3 } from './middleware/middleware3';
 import middleware1 from './middleware/middleware1';
 import { CatsController } from './cats/cats.controller';
 import { CustomerController } from './customer/customer.controller';
-
+import { ConfigModule } from '@nestjs/config';
 @Module({
-  imports: [CustomerModule, CatsModule, ProductModule, GlobalModule],
+  imports: [
+    CustomerModule,
+    CatsModule,
+    ProductModule,
+    GlobalModule,
+    ConfigModule.forRoot({
+      cache: true,
+      isGlobal: true,
+    }),
+  ],
   controllers: [],
   providers: [Logger],
 })
